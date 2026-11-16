@@ -54,6 +54,7 @@
 #include <fs_avb/fs_avb.h>
 #include <fs_mgr.h>
 #include <fs_mgr_dm_linear.h>
+#include <libdm/dm.h>
 #include <fs_mgr_overlayfs.h>
 #include <fs_mgr/roots.h>
 #include <libgsi/libgsi.h>
@@ -5162,7 +5163,6 @@ void TWPartitionManager::Unlock_Block_Partitions() {
 }
 
 bool TWPartitionManager::Unmap_Super_Devices() {
-	bool destroyed = false;
 #ifndef TW_EXCLUDE_APEX
 	twrpApex apex;
 	apex.Unmount();
@@ -5178,19 +5178,22 @@ bool TWPartitionManager::Unmap_Super_Devices() {
 				blk_device_partition.append(PartitionManager.Get_Active_Slot_Suffix());
 			(*iter)->UnMount(false);
 			LOGINFO("removing dynamic partition: %s\n", blk_device_partition.c_str());
-			destroyed = DestroyLogicalPartition(blk_device_partition);
+			// a nofail logical partition that isn't in this ROM's super metadata
+			// was never mapped; not being mapped is the state we want anyway
+			bool unmapped = android::dm::DeviceMapper::Instance().DeleteDeviceIfExists(blk_device_partition);
 			std::string cow_partition = blk_device_partition + "-cow";
 			std::string cow_partition_path = "/dev/block/mapper/" + cow_partition;
 			struct stat st;
 			if (lstat(cow_partition_path.c_str(), &st) == 0) {
 				LOGINFO("removing cow partition: %s\n", cow_partition.c_str());
-				destroyed = DestroyLogicalPartition(cow_partition);
+				unmapped = android::dm::DeviceMapper::Instance().DeleteDeviceIfExists(cow_partition) && unmapped;
+			}
+			if (!unmapped) {
+				LOGERR("Unable to unmap dynamic partition: %s\n", blk_device_partition.c_str());
+				return false;
 			}
 			iter = Partitions.erase(iter);
 			delete part;
-			if (!destroyed) {
-				return false;
-			}
 		} else {
 			++iter;
 		}
