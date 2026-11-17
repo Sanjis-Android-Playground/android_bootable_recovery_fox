@@ -1258,6 +1258,9 @@ int TWinstall_zip(const char *path, int *wipe_cache, bool check_for_digest)
   int ret_val, zip_verify = 1, unmount_system = 1, reflashtwrp = 0, unmount_vendor = 1;
   bool run_rom_scripts = false;
 
+  // set by the ROM detection paths below; used for the automatic recovery reflash
+  DataManager::SetValue("fox_rom_flash_detected", "0");
+
   if (TWFunc::Block_Operations_Until_Reboot())
 	return INSTALL_CORRUPT;
 
@@ -1408,6 +1411,7 @@ int TWinstall_zip(const char *path, int *wipe_cache, bool check_for_digest)
 			HighSpeedResult hs_res = TryHighSpeedAbInstall(path, Zip);
 			if (hs_res == HighSpeedResult::kSucceeded) {
 				DataManager::SetValue(FOX_ZIP_INSTALLER_CODE, 1); // mark as custom ROM install
+				DataManager::SetValue("fox_rom_flash_detected", "1");
 				// from here on the install is finished like any other A/B ROM
 				// flash: the shared tail of this function runs the post-ROM
 				// script (which is what puts OrangeFox back after the ROM's own
@@ -1441,6 +1445,7 @@ int TWinstall_zip(const char *path, int *wipe_cache, bool check_for_digest)
 				ret_val = Run_Update_Binary(path, wipe_cache, AB_OTA_ZIP_TYPE);
 
 				DataManager::SetValue(FOX_ZIP_INSTALLER_CODE, 1); // mark as custom ROM install
+				DataManager::SetValue("fox_rom_flash_detected", "1");
 
 				umount("/system/bin/sh");
 				unlink("/tmp/sh");

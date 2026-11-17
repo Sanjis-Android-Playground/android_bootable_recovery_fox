@@ -1263,7 +1263,7 @@ void DataManager::SetDefaultValues()
   #ifdef OF_NO_REFLASH_CURRENT_ORANGEFOX
 	mPersist.SetValue(TW_AUTO_REFLASHTWRP_VAR, "0");
   #else
-	mPersist.SetValue(TW_AUTO_REFLASHTWRP_VAR, "1");
+	mPersist.SetValue(TW_AUTO_REFLASHTWRP_VAR, "0"); // opt-in fallback for unrecognised ROM zips
   #endif
 
   // avb2.0 disable
@@ -1660,6 +1660,14 @@ void DataManager::ReadSettingsFile(void)
 
   LOGINFO("Attempt to load settings from settings file...\n");
   LoadValues(settings_file);
+
+  // one-time migration: auto-reflash is now driven by ROM detection, and the
+  // checkbox is only an opt-in fallback. Clear the old default-on value.
+  if (GetIntValue("fox_reflash_fallback_v2") != 1) {
+      SetValue(TW_AUTO_REFLASHTWRP_VAR, "0");
+      SetValue("fox_reflash_fallback_v2", "1", 1);
+  }
+
   Output_Version();
 #endif // ifdef TW_OEM_BUILD
   PartitionManager.Mount_All_Storage();

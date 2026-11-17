@@ -387,6 +387,10 @@ string tmp = "";
   if (!TWFunc::Path_Exists(path))
      return false;
 
+  // AnyKernel-style packages flash a boot image but are not ROM zips
+  if (zip_EntryExists(Zip, "anykernel.sh") || zip_EntryExists(Zip, "tools/ak3-core.sh"))
+     return false;
+
   // full ROM or block-based OTA
   if (TWFunc::CheckWord(path, "block_image_update") || TWFunc::CheckWord(path, "block_image_recover"))
   	return true;
@@ -669,6 +673,7 @@ int Fox_Prepare_Update_Binary(const char *path, ZipArchiveHandle Zip)
 	      if (Installing_ROM_Query(FOX_TMP_PATH, Zip))
 	        {
 		  zip_is_rom_package = true;
+		  DataManager::SetValue("fox_rom_flash_detected", "1");
 		  DataManager::SetValue(FOX_ZIP_INSTALLER_CODE, 1); // standard ROM
 		  
 	          // check for embedded recovery installs
@@ -1113,8 +1118,13 @@ void Fox_Post_Zip_Install(const int result)
 	}
 	#endif
 	//---- Virtual A/B compensations ---- //
+	// auto-reflash for a detected ROM zip; the checkbox is only a fallback
+	// for ROM installers the detector above did not recognise
+	bool rom_flash = DataManager::GetIntValue("fox_rom_flash_detected") == 1 ||
+	                 DataManager::GetIntValue(TW_AUTO_REFLASHTWRP_VAR) == 1;
+	TWFunc::Fox_Property_Set("fox_rom_flash", rom_flash ? "1" : "0");
 #ifdef AB_OTA_UPDATER
-	if (DataManager::GetIntValue(TW_AUTO_REFLASHTWRP_VAR) && TWFunc::IsRecoveryOverwritten()) {
+	if (rom_flash && TWFunc::IsRecoveryOverwritten()) {
 		twrpRepacker repacker;
 		repacker.Flash_Current_Twrp();
 		TWFunc::IsRecoveryOverwritten(true);
@@ -1122,7 +1132,8 @@ void Fox_Post_Zip_Install(const int result)
 #endif
          PartitionManager.Update_System_Details();
 	// Run any custom script after completion of all ROM flashing processes
-	TWFunc::RunFoxScript("/system/bin/post_rom_flash_completion.sh", "");
+	if (rom_flash)
+		TWFunc::RunFoxScript("/system/bin/post_rom_flash_completion.sh", "");
 
 #ifdef OF_BLOCK_OPERATIONS_AFTER_ROM_FLASH
 	TWFunc::Fox_Property_Set("fox_block_operations_pending_reboot", "blocking");
