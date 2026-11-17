@@ -373,6 +373,9 @@ int OpenRecoveryScript::run_script_file(void) {
 					gui_msg(Msg("setting_empty=Setting '{1}' to empty")(value1));
 					DataManager::SetValue(value1, "");
 				}
+			} else if (strcmp(command, "noForceReboot") == 0 || strcmp(command, "noforcereboot") == 0) {
+				// Keep the recovery UI instead of rebooting to system when the script finishes
+				DataManager::SetValue("tw_no_ors_reboot", "1");
 			} else if (strcmp(command, "mkdir") == 0) {
 				// Make directory (recursive)
 				DataManager::SetValue("tw_action_text2", gui_parse_text("{@making_dir1}"));
@@ -698,6 +701,7 @@ void OpenRecoveryScript::Run_OpenRecoveryScript(void) {
 // this is called by the "openrecoveryscript" GUI action called via action page from Run_OpenRecoveryScript
 int OpenRecoveryScript::Run_OpenRecoveryScript_Action() {
 	int op_status = 1;
+	DataManager::SetValue("tw_no_ors_reboot", "0");
 	// Check for the SCRIPT_FILE_TMP first as these are AOSP recovery commands
 	// that we converted to ORS commands during boot in recovery.cpp.
 	// Run those first.
@@ -719,6 +723,12 @@ int OpenRecoveryScript::Run_OpenRecoveryScript_Action() {
 			reboot = 1;
 			op_status = 0;
 		}
+	}
+	if (DataManager::GetIntValue("tw_no_ors_reboot") == 1) {
+		DataManager::SetValue("tw_no_ors_reboot", "0");
+		DataManager::SetValue("tw_page_done", 1);
+		gui_msg(Msg(msg::kHighlight, "ors_stay_recovery=OpenRecoveryScript finished. Staying in recovery."));
+		return op_status;
 	}
 	if (reboot || code1 == 3 || code2 == 3) 
 	   {	  
