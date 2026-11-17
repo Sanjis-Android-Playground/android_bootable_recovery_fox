@@ -518,6 +518,7 @@
 		<string name="recovery_commands_complete">Recovery Commands completed</string>
 		<string name="running_ors">Running OpenRecoveryScript</string>
 		<string name="ors_complete">OpenRecoveryScript completed</string>
+		<string name="ors_stay_recovery">OpenRecoveryScript finished. Staying in recovery.</string>
 		<string name="no_updater_binary">Could not find '{1}' in the ZIP file.</string>
 		<string name="check_for_md5">Checking for MD5 file...</string>
 		<string name="fail_sysmap">Failed to map file '{1}'</string>
