@@ -458,6 +458,9 @@ int main(int argc, char **argv) {
   	property_set("ro.orangefox.boot", "1");
   	property_set("ro.orangefox.type", FOX_BUILD_TYPE);
   	property_set("ro.orangefox.variant", FOX_VARIANT);
+	#ifdef OF_AUTO_DFE
+	property_set("ro.orangefox.auto_dfe", "1");
+	#endif
   	property_set("ro.orangefox.build", "orangefox");
 	property_set("ro.orangefox.release.version", FOX_BUILD);
   	property_set("ro.orangefox.boot.header.version", BOARD_BOOT_HEADER_VERSION);

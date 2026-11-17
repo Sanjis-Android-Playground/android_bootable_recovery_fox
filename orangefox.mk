@@ -878,6 +878,11 @@ ifeq ($(OF_BLOCK_OPERATIONS_AFTER_ROM_FLASH),1)
     LOCAL_CFLAGS += -DOF_BLOCK_OPERATIONS_AFTER_ROM_FLASH='"1"'
 endif
 
+# auto-DFE hooks in the device post-ROM-flash script (checks ro.orangefox.auto_dfe)
+ifeq ($(OF_AUTO_DFE),1)
+    LOCAL_CFLAGS += -DOF_AUTO_DFE
+endif
+
 # GUI double-tap-to-wake for devices with screen blanking off
 ifeq ($(FOX_NO_BLANK_DT2W),1)
     ifneq ($(TW_NO_SCREEN_BLANK),true)
